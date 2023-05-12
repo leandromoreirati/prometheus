@@ -1,0 +1,154 @@
+global:
+  rbac:
+    create: true
+    ## Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles
+    createAggregateClusterRoles: false
+    pspEnabled: false
+    pspAnnotations: {}
+grafana:
+  enabled: false
+prometheusOperator:
+  enabled: true
+  podLabels:
+    sidecar.istio.io/inject: "true"
+  networkPolicy:
+    enabled: false
+  serviceMonitor:
+    relabelings:
+    # Replace job value
+    - sourceLabels:
+      - __address__
+      action: replace
+      targetLabel: job
+      replacement: prometheus-operator
+  kubeletService:
+    enabled: false
+prometheus:
+  enabled: true
+  annotations: {}
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+  thanosService:
+    enabled: false
+
+  thanosServiceMonitor:
+    enabled: false
+
+  thanosServiceExternal:
+    enabled: false
+
+    ## gRPC port config
+    portName: grpc
+    port: 10901
+    targetPort: "grpc"
+
+    ## HTTP port config (for metrics)
+    httpPortName: http
+    httpPort: 10902
+    targetHttpPort: "http"
+
+    ## Denotes if this Service desires to route external traffic to node-local or cluster-wide endpoints
+    externalTrafficPolicy: Cluster
+
+    ## Service type
+    ##
+    type: LoadBalancer
+
+    ## Port to expose on each node
+    ##
+    nodePort: 30901
+    httpNodePort: 30902
+
+  ## Configuration for Prometheus service
+  ##
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+    port: 9090
+    targetPort: 9090
+    externalIPs: []
+    nodePort: 30090
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    externalTrafficPolicy: Cluster
+    type: ClusterIP
+    sessionAffinity: ""
+
+  podSecurityPolicy:
+    allowedCapabilities: []
+    allowedHostPaths: []
+    volumes: []
+
+  ## Settings affecting prometheusSpec
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#prometheusspec
+  ##
+  prometheusSpec:
+    disableCompaction: false     
+    probeSelector: {}
+    probeNamespaceSelector: {}
+    retention: 10d
+    retentionSize: ""
+    walCompression: true
+    paused: false
+    replicas: 2
+    logLevel: info
+    logFormat: logfmt
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 512m
+      limits:
+        memory: 4Gi
+        cpu: 1024m
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+    serviceMonitor:
+      relabelings:
+        # Replace job value
+        - sourceLabels:
+          - __address__
+          action: replace
+          targetLabel: job
+          replacement: prometheus
+
+# Disabling monitoring of K8s services.
+#kubelet:
+#  enabled: false
+#kubeApiServer:
+#  enabled: false
+#kubeControllerManager:
+#  enabled: false
+#kubeScheduler:
+#  enabled: false
+#kubeProxy:
+#  enabled: false
+#kubeEtcd:
+#  enabled: false
+
+#kubeEtcd:
+#    enabled: true
+#    endpoints:
+#      - 172.18.0.5
+#  
+#    service:
+#        port: 2379
+#        targetPort: 2379
+#    serviceMonitor:
+#        scheme: https
+#        insecureSkipVerify: true
+#        caFile: /etc/kubernetes/pki/etcd/ca.crt
+#        certFile: /etc/kubernetes/pki/etcd/server.crt
+#        keyFile: /etc/kubernetes/pki/etcd/server.key
+#        #certFile: /etc/kubernetes/pki/etcd/peer.crt
+#        #keyFile: /etc/kubernetes/pki/etcd/peer.key
+alertmanager:
+  enabled: false
